@@ -89,12 +89,8 @@ function QueryView(props) {
   }, [query.name]);
 
   useEffect(() => {
-    DataSource.get({ id: query.data_source_id }).then(setDataSource);
+    DataSource.get({ id: query.data_source_id }).then(setDataSource);    
   }, [query.data_source_id]);
-
-  console.log("CONNECTED_DATASOURCES", dataSource);
-  console.log("CONNECTED_QUERY", query);
-  console.log("QUERY RESULTS", queryResult);
 
   return (
     <div
@@ -102,7 +98,7 @@ function QueryView(props) {
         "query-view-fullscreen": fullscreen,
         "query-fixed-layout": isFixedLayout,
       })}>
-      {/* <div className="container w-100">
+      <div className="container w-100">
         <QueryPageHeader
           query={query}
           dataSource={dataSource}
@@ -150,7 +146,7 @@ function QueryView(props) {
             />
           </div>
         )}
-      </div> */}
+      </div>
       <div className="query-view-content">
         {query.hasParameters() && (
           <div className={cx("bg-white tiled p-15 m-t-15 m-l-15 m-r-15", { hidden: fullscreen })}>
