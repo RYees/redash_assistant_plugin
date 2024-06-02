@@ -2,8 +2,6 @@ import React,{ useState} from 'react'
 import redashpng from "@/assets/images/favicon-96x96.png";
 import './chatbox.less'
 import Chat from '@/services/chat';
-// import QueryService from '@/services/query';
-// import DataSource from "@/services/data-source";
 import { IoCopy } from "react-icons/io5";
 import { FaCheck } from "react-icons/fa6";
 import SyntaxHighlighter from 'react-syntax-highlighter';

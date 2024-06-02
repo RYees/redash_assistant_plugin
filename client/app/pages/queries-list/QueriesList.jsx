@@ -123,7 +123,7 @@ function QueriesList({ controller }) {
             currentUser.hasPermission("create_query") ? (
               <Link.Button block type="primary" href="queries/new">
                 <i className="fa fa-plus m-r-5" aria-hidden="true" />
-                New Query
+                New Query 
               </Link.Button>
             ) : null
           }

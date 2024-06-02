@@ -1,7 +1,7 @@
 import { get, find, toUpper } from "lodash";
-import React from "react";
+import React, {useEffect} from "react";
 import PropTypes from "prop-types";
-
+import Chat from '@/services/chat';
 import Modal from "antd/lib/modal";
 import routeWithUserSession from "@/components/ApplicationArea/routeWithUserSession";
 import navigateTo from "@/components/ApplicationArea/navigateTo";
@@ -32,6 +32,7 @@ class EditDataSource extends React.Component {
   };
 
   componentDidMount() {
+    console.log("ekr", this.props);
     DataSource.get({ id: this.props.dataSourceId })
       .then(dataSource => {
         const { type } = dataSource;
@@ -41,6 +42,15 @@ class EditDataSource extends React.Component {
       .catch(error => this.props.onError(error));
   }
 
+  chatWithOpenai = async() => {
+    const requestOptions = {
+      db_id: this.props.dataSourceId
+    };
+    const response = await Chat.csource(requestOptions);
+    console.log("again ui", response)
+  }
+  
+    
   saveDataSource = (values, successCallback, errorCallback) => {
     const { dataSource } = this.state;
     helper.updateTargetWithValues(dataSource, values);
@@ -129,6 +139,7 @@ class EditDataSource extends React.Component {
           <img className="p-5" src={`${IMG_ROOT}/${type.type}.png`} alt={type.name} width="64" />
           <h3 className="m-0">{type.name}</h3>
         </div>
+        <button onClick={()=> this.chatWithOpenai()}>Testing</button>
         <div className="col-md-4 col-md-offset-4 m-b-10">
           <DynamicForm {...formProps} />
         </div>

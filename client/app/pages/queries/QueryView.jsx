@@ -89,7 +89,7 @@ function QueryView(props) {
   }, [query.name]);
 
   useEffect(() => {
-    DataSource.get({ id: query.data_source_id }).then(setDataSource);    
+    DataSource.get({ id: query.data_source_id }).then(setDataSource);
   }, [query.data_source_id]);
 
   return (
@@ -165,7 +165,7 @@ function QueryView(props) {
             <QueryVisualizationTabs
               queryResult={queryResult}
               visualizations={query.visualizations}
-              showNewVisualizationButton={queryFlags.canEdit && queryResultData.status === ExecutionStatus.FINISHED}
+              showNewVisualizationButton={queryFlags.canEdit && queryResultData.status === ExecutionStatus.DONE}
               canDeleteVisualizations={queryFlags.canEdit}
               selectedTab={selectedVisualization}
               onChangeTab={setSelectedVisualization}

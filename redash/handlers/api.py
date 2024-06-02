@@ -3,7 +3,8 @@ from flask_restful import Api
 from werkzeug.wrappers import Response
 
 from redash.handlers.chat import (
-    ChatResource
+    ChatResource,
+    ChatSourceResource
 )
 
 from redash.handlers.alerts import (
@@ -109,6 +110,7 @@ class ApiExt(Api):
 api = ApiExt()
 
 api.add_org_resource(ChatResource, "/api/chat", endpoint="chat")
+api.add_org_resource(ChatSourceResource, "/api/chatsource", endpoint="chatsource")
 
 @api.representation("application/json")
 def json_representation(data, code, headers=None):

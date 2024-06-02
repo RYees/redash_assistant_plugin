@@ -190,10 +190,6 @@ function QuerySource(props) {
   });
   const editVisualization = useEditVisualizationDialog(query, queryResult, newQuery => setQuery(newQuery));
   const deleteVisualization = useDeleteVisualization(query, setQuery);
-  
-  console.log("CONNECTED_DATASOURCES", dataSource);
-  console.log("CONNECTED_DATAQUERY", query);
-  console.log("CONNECTED_SCHEMA", schema);
 
   return (
     <div className={cx("query-page-wrapper", { "query-fixed-layout": !isMobile })}>
@@ -223,7 +219,6 @@ function QuerySource(props) {
                 />
               </div>
             )}
-       
             <div className="editor__left__schema">
               <SchemaBrowser
                 dataSource={dataSource}
@@ -385,9 +380,7 @@ function QuerySource(props) {
                     <QueryVisualizationTabs
                       queryResult={queryResult}
                       visualizations={query.visualizations}
-                      showNewVisualizationButton={
-                        queryFlags.canEdit && queryResultData.status === ExecutionStatus.FINISHED
-                      }
+                      showNewVisualizationButton={queryFlags.canEdit && queryResultData.status === ExecutionStatus.DONE}
                       canDeleteVisualizations={queryFlags.canEdit}
                       selectedTab={selectedVisualization}
                       onChangeTab={setSelectedVisualization}
