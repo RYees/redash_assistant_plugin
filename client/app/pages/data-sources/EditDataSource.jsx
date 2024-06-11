@@ -32,7 +32,6 @@ class EditDataSource extends React.Component {
   };
 
   componentDidMount() {
-    console.log("ekr", this.props);
     DataSource.get({ id: this.props.dataSourceId })
       .then(dataSource => {
         const { type } = dataSource;
@@ -42,15 +41,14 @@ class EditDataSource extends React.Component {
       .catch(error => this.props.onError(error));
   }
 
-  chatWithOpenai = async() => {
+  createQuery = async() => {
     const requestOptions = {
       db_id: this.props.dataSourceId
     };
     const response = await Chat.csource(requestOptions);
     console.log("again ui", response)
   }
-  
-    
+   
   saveDataSource = (values, successCallback, errorCallback) => {
     const { dataSource } = this.state;
     helper.updateTargetWithValues(dataSource, values);
@@ -125,6 +123,7 @@ class EditDataSource extends React.Component {
       defaultShowExtraFields: helper.hasFilledExtraField(type, dataSource),
     };
 
+  
     return (
       <div className="row" data-test="DataSource">
         <div className="text-right m-r-10">
@@ -139,7 +138,7 @@ class EditDataSource extends React.Component {
           <img className="p-5" src={`${IMG_ROOT}/${type.type}.png`} alt={type.name} width="64" />
           <h3 className="m-0">{type.name}</h3>
         </div>
-        <button onClick={()=> this.chatWithOpenai()}>Testing</button>
+        <button onClick={()=> this.createQuery()}>Testing</button>
         <div className="col-md-4 col-md-offset-4 m-b-10">
           <DynamicForm {...formProps} />
         </div>

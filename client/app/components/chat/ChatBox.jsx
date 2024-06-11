@@ -1,4 +1,4 @@
-import React,{ useState} from 'react'
+import React,{useCallback, useState} from 'react'
 import redashpng from "@/assets/images/favicon-96x96.png";
 import './chatbox.less'
 import Chat from '@/services/chat';
@@ -7,7 +7,7 @@ import { FaCheck } from "react-icons/fa6";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import copy from 'copy-to-clipboard';
-
+//import useQueryExecute from "../../pages/queries/hooks/useQueryExecute";
 
 export default function ChatBox() {
   const [input, setInput] = useState("")
@@ -29,11 +29,6 @@ export default function ChatBox() {
       setInput("");  
     }
   }
-  // async function test() {
-  //    const response = await DataSource.getSchema({ id: 1 });
-  //    return response;
-  // }
-  // console.log("Fetch query", test)
 
   async function chatWithOpenai(text) {
     const requestOptions = {
@@ -46,6 +41,47 @@ export default function ChatBox() {
     };
      setChatHistory((history) => [...history, data]);
      setInput("");
+  }
+
+  async function postquery() {
+    const query_data = {
+        "name": "Testing",
+        "query": "select * from sales;",
+        "schedule": {"interval": "3600"},
+        "data_source_id": "1",
+    }
+
+    const response = await Chat.createquery(query_data)
+    // console.log("output", response)
+    executequery(response.id)
+  }
+
+  async function executequery(qry_id) {
+    const queryData = {
+      query: "SELECT * FROM sales",
+      query_id: qry_id,
+      max_age: 0, 
+      data_source_id: "1",
+      parameters: {}, 
+      apply_auto_limit: false 
+    };
+  
+    const response = await Chat.postqryResult(queryData);
+    let jobId = response.job.id;
+    let resultId = null;
+    if (resultId === null) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+        const jobResponse = await Chat.getjob(jobId);
+        resultId = jobResponse.job.result_id;
+        let res = await Chat.fetchqryResult(resultId)
+        console.log("query result", res)
+      } catch(error){
+        console.log("error", error)
+      }
+    } else {}
+  
+    
   }
 
   const handleCopy = (content) => {
@@ -116,10 +152,11 @@ export default function ChatBox() {
       <div className='chatcontainer'>
         <div>
             <div className='headbox'>
-              <p>query, visualize with AI</p>            
+              <p onClick={postquery}>query, visualize with AI</p>                   
             </div>
+            
 
-            <div className='chatbox'>
+            <div className='chatbox'> 
               {chatHistory.map((chat, index) => (
                 <div key={index} className="chatcontain">
                   {chat.sender === "user" ? (

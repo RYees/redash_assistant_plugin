@@ -29,22 +29,19 @@ class ChatSourceResource(BaseResource):
 
         # Use the QueryListResource endpoint
         query_list_resource = QueryListResource()
-        query_list_resource.current_user = self.current_user
-        query_list_resource.current_org = self.current_org
-        query_data = {
-            "data_source_id": db_id,
-            "query_text": "select * from sales;",
-            "name": "First Query",
-            "description": "",
-            "schedule": None,
-            "options": {},
-            "is_draft": True
-        }
-        response = query_list_resource.post(query_data)
+        # query_list_resource.current_user = "admin"
+        # query_list_resource.current_org = "admin"
+        # query_data = {
+        #      "name": "Testing",
+        #     "query": "select * from sales;",
+        #     "schedule": {"interval": "3600"},
+        #     "data_source_id": "1",
+        # }
+        # response = query_list_resource.post(query_data)
 
-        self.record_event({"action": "create", "object_id": response["id"], "object_type": "query"})
+        # self.record_event({"action": "create", "object_id": response["id"], "object_type": "query"})
 
-        return response
+        return query_list_resource, 200
     
 class ChatResource(BaseResource):
     def post(self):
