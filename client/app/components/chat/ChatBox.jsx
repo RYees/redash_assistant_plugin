@@ -50,7 +50,6 @@ export default function ChatBox() {
         "schedule": {"interval": "3600"},
         "data_source_id": "1",
     }
-
     const response = await Chat.createquery(query_data)
     // console.log("output", response)
     executequery(response.id)

@@ -110,7 +110,7 @@ class ApiExt(Api):
 api = ApiExt()
 
 api.add_org_resource(ChatResource, "/api/chat", endpoint="chat")
-api.add_org_resource(ChatSourceResource, "/api/chatsource", endpoint="chatsource")
+api.add_org_resource(ChatSourceResource, "/api/data_to_gpt", endpoint="data_to_gpt")
 
 @api.representation("application/json")
 def json_representation(data, code, headers=None):
