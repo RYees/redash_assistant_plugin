@@ -46,8 +46,6 @@ import useUnsavedChangesAlert from "./hooks/useUnsavedChangesAlert";
 import "./components/QuerySourceDropdown"; // register QuerySourceDropdown
 import "./QuerySource.less";
 
-import Chat from '@/services/chat';
-
 function chooseDataSourceId(dataSourceIds, availableDataSources) {
   availableDataSources = map(availableDataSources, ds => ds.id);
   return find(dataSourceIds, id => includes(availableDataSources, id)) || null;
@@ -192,8 +190,8 @@ function QuerySource(props) {
   });
   const editVisualization = useEditVisualizationDialog(query, queryResult, newQuery => setQuery(newQuery));
   const deleteVisualization = useDeleteVisualization(query, setQuery);
-  
-  console.log("somone", query);
+
+  console.log("staang", query)
 
   return (
     <div className={cx("query-page-wrapper", { "query-fixed-layout": !isMobile })}>
@@ -223,7 +221,6 @@ function QuerySource(props) {
                 />
               </div>
             )}
-
             <div className="editor__left__schema">
               <SchemaBrowser
                 dataSource={dataSource}

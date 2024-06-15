@@ -18,8 +18,10 @@ import {
   VisualizationType,
 } from "@redash/viz/lib";
 import { Renderer, Editor } from "@/components/visualizations/visualizationComponents";
-
 import "./EditVisualizationDialog.less";
+import Chat from "@/services/chat";
+
+console.log("higher", getDefaultVisualization())
 
 function updateQueryVisualizations(query, visualization) {
   const index = findIndex(query.visualizations, v => v.id === visualization.id);
@@ -98,7 +100,6 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
   const [name, setName] = useState(defaultState.name);
   const [nameChanged, setNameChanged] = useState(false);
   const [options, setOptions] = useState(defaultState.options);
-
   const [saveInProgress, setSaveInProgress] = useState(false);
 
   useEffect(() => {
@@ -114,7 +115,6 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
     if (!nameChanged) {
       setName(config.name);
     }
-
     setOptions(config.getOptions(isNew ? {} : visualization.options, data));
   }
 
@@ -135,15 +135,49 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
       visualizationOptions = omit(visualizationOptions, ["paginationSize"]);
     }
 
+    // type = "line";
+    // options = {
+    //   x_axis: "year",
+    //   y_axis: [
+    //     {
+    //     name: "count"
+    //     }
+    //   ]
+    // }
+
     const visualizationData = extend(newVisualization(type), visualization, {
-      name,
+      name: "killed",
       options: visualizationOptions,
-      query_id: query.id,
+      query_id: 4,
     });
+    console.log("new it", type, visualization)
+    console.log("new", visualizationData)
     saveVisualization(visualizationData).then(savedVisualization => {
       updateQueryVisualizations(query, savedVisualization);
       dialog.close(savedVisualization);
     });
+  }
+
+  async function visual() {
+    let visualizationOptions = options;
+    // if (type === "TABLE") {
+    //   visualizationOptions = omit(visualizationOptions, ["paginationSize"]);
+    // }
+
+    const visualData = {
+      type: 'line',
+      name: "dop",
+      options: options,
+      query_id: 4,
+    };
+    console.log("viz", visualData)
+    // const response = await Chat.visualize(visualData);
+    // const response = await Visualization.save(visualData)
+    // response.then(savedVisualization => {updateQueryVisualizations(query, savedVisualization);});
+    saveVisualization(visualData).then(savedVisualization => {
+      updateQueryVisualizations(query, savedVisualization);
+    });
+    // console.log("lower",  response)
   }
 
   function dismiss() {
@@ -178,6 +212,7 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
       <div className="edit-visualization-dialog">
         <div className="visualization-settings">
           <div className="m-b-15">
+            <h1 onClick={save}>Click</h1>
             <label htmlFor={vizTypeId}>Visualization Type</label>
             <Select
               data-test="VisualizationType"

@@ -9,7 +9,8 @@ const Chat = {
   postqryResult: data => axios.post('/api/query_results', data),
   getjob: data => axios.get(`/api/jobs/${data}`),
   getquery: data => axios.get(`/api/queries/${data}/results`),
-  fetchSchema: data => axios.get(`api/data_sources/${data}/schema`)
+  fetchSchema: data => axios.get(`/api/data_sources/${data}/schema`),
+  visualize: data => axios.post('/api/visualizations', data)
 };
 
 export default Chat;

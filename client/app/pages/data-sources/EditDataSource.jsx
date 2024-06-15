@@ -111,6 +111,7 @@ class EditDataSource extends React.Component {
         "data_source_id": this.props.dataSourceId,
     }
     const response = await Chat.createquery(query_data)
+    console.log("i hear", response)
     this.executequery(response.id)
   }
 

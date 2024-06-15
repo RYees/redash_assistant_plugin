@@ -43,45 +43,45 @@ export default function ChatBox() {
      setInput("");
   }
 
-  async function postquery() {
-    const query_data = {
-        "name": "Testing",
-        "query": "select * from sales;",
-        "schedule": {"interval": "3600"},
-        "data_source_id": "1",
-    }
-    const response = await Chat.createquery(query_data)
-    // console.log("output", response)
-    executequery(response.id)
-  }
+  // async function postquery() {
+  //   const query_data = {
+  //       "name": "Testing",
+  //       "query": "select * from sales;",
+  //       "schedule": {"interval": "3600"},
+  //       "data_source_id": "1",
+  //   }
+  //   const response = await Chat.createquery(query_data)
+  //   // console.log("output", response)
+  //   executequery(response.id)
+  // }
 
-  async function executequery(qry_id) {
-    const queryData = {
-      query: "SELECT * FROM sales",
-      query_id: qry_id,
-      max_age: 0, 
-      data_source_id: "1",
-      parameters: {}, 
-      apply_auto_limit: false 
-    };
+  // async function executequery(qry_id) {
+  //   const queryData = {
+  //     query: "SELECT * FROM sales",
+  //     query_id: qry_id,
+  //     max_age: 0, 
+  //     data_source_id: "1",
+  //     parameters: {}, 
+  //     apply_auto_limit: false 
+  //   };
   
-    const response = await Chat.postqryResult(queryData);
-    let jobId = response.job.id;
-    let resultId = null;
-    if (resultId === null) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
-        const jobResponse = await Chat.getjob(jobId);
-        resultId = jobResponse.job.result_id;
-        let res = await Chat.fetchqryResult(resultId)
-        console.log("query result", res)
-      } catch(error){
-        console.log("error", error)
-      }
-    } else {}
+  //   const response = await Chat.postqryResult(queryData);
+  //   let jobId = response.job.id;
+  //   let resultId = null;
+  //   if (resultId === null) {
+  //     try {
+  //       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+  //       const jobResponse = await Chat.getjob(jobId);
+  //       resultId = jobResponse.job.result_id;
+  //       let res = await Chat.fetchqryResult(resultId)
+  //       console.log("query result", res)
+  //     } catch(error){
+  //       console.log("error", error)
+  //     }
+  //   } else {}
   
     
-  }
+  // }
 
   const handleCopy = (content) => {
     copy(content);
@@ -96,20 +96,53 @@ export default function ChatBox() {
     }, 2000); // Change the duration (in milliseconds) as needed
   };
 
-  const formatingCode = (code) => {
-    // Split the code by lines to remove unnecessary white spaces
-    const lines = code.split(/\s*(?=<)/);
-    
-    // Remove leading and trailing white spaces from each line
-    const trimmedLines = lines.map((line) => line.trim());
-    
-    // Join the lines with line breaks and indentation
-    const formattedCode = trimmedLines.join('\n');
-    
-    return formattedCode;
-  };
 
-  const splitAnswerParts = (answer) => {
+  const visual = async() => {
+    const newVisualizationData = {
+      query_id: 4,
+      type: "line",
+      name: "JIMMY",
+      x_axis: "year",
+      y_axis: [
+        {
+        name: "count"
+        }
+      ]
+      };
+    const potions = {
+      "globalSeriesType": "box",
+      "sortX": true,
+      "legend": {"enabled": true},
+      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": true}],
+      "xAxis": {"type": "category", "labels": {"enabled": true}},
+      "error_y": {"type": "data", "visible": true},
+      "series": {"stacking": null, "error_y": {"type": "data", "visible": true}},
+      "columnMapping": { "year": "x",
+        "count": "y"},
+      "seriesOptions": {
+        count: {
+          name: "count",
+          type: "box",
+          index: 0,
+          yAxis: 0,
+          zIndex: 0
+        }
+      },
+      "showDataLabels": false
+  }
+    const visualizationConfig = {
+      query_id: 4,
+      name: "PIMMY",
+      description: "",
+      options: potions
+    };
+    
+    const response = await Chat.visualize(visualizationConfig)
+    console.log("result", response);
+  };
+  
+
+  const AnswerParts = (answer) => {
     const parts = [];
     const codeRegex = /```([\s\S]*?)```/g;
   
@@ -123,15 +156,10 @@ export default function ChatBox() {
         const textContent = answer.substring(lastIndex, match.index).trim();
         parts.push({ type: 'text', content: textContent });
       }
-  
-      const lines = codeContent.split('\n');
-      const firstLine = lines[0].trim();
-      const firstWord = firstLine.split(' ')[0];
-      const firstLineEndIndex = codeContent.indexOf(' ') + 1;
-      const remainingCode = codeContent.substring(firstLineEndIndex).trim();
-      const formattedCodeContent = formatingCode(remainingCode); // Process the remaining code through formatingCode function
-  
-      parts.push({ type: 'code', firstWord, content: formattedCodeContent });
+            
+      const [firstWord, ...rest] = codeContent.split(/\s+/);
+
+      parts.push({ type: 'code', firstWord, content: rest.join(' ') });
   
       lastIndex = match.index + match[0].length;
     }
@@ -140,18 +168,18 @@ export default function ChatBox() {
       const textContent = answer.substring(lastIndex).trim();
       parts.push({ type: 'text', content: textContent });
     }
-  
+       
     return parts;
   };
-
   
+
   return (
     <>
       {open?
       <div className='chatcontainer'>
         <div>
             <div className='headbox'>
-              <p onClick={postquery}>query, visualize with AI</p>                   
+              <p onClick={visual}>query, visualize with AI</p>                   
             </div>
             
 
@@ -169,7 +197,7 @@ export default function ChatBox() {
                       <div className="">
                         {chat?.text && (
                           <div>
-                            {splitAnswerParts(chat.text).map((part, partIndex) => (
+                            {AnswerParts(chat.text).map((part, partIndex) => (
                               <React.Fragment key={partIndex}>
                                 {part.type === 'code' ? (
                                   <div className="">
@@ -192,7 +220,7 @@ export default function ChatBox() {
                                       customStyle={{
                                         fontSize: '14px',
                                         lineHeight: '1.5',
-                                        maxWidth: '100%',
+                                        maxWidth: '200%',
                                         wordBreak: 'break-word',
                                         overflowWrap: 'break-word',
                                         whiteSpace: 'pre-wrap',

@@ -95,6 +95,9 @@ export default function QueryVisualizationTabs({
   canRefresh,
   ...props
 }) {
+  console.log("visualalization", props.visualizations);
+  console.log("vizbutton", showNewVisualizationButton)
+  
   const visualizations = useMemo(
     () => (props.visualizations.length > 0 ? props.visualizations : defaultVisualizations),
     [props.visualizations]
