@@ -1,4 +1,4 @@
-import React,{useCallback, useState} from 'react'
+import React,{useContext, useState} from 'react'
 import redashpng from "@/assets/images/favicon-96x96.png";
 import './chatbox.less'
 import Chat from '@/services/chat';
@@ -7,9 +7,20 @@ import { FaCheck } from "react-icons/fa6";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import copy from 'copy-to-clipboard';
-//import useQueryExecute from "../../pages/queries/hooks/useQueryExecute";
+// import { BaseContext } from '@/context/DataSourceContext';
 
 export default function ChatBox() {
+  // const { dataSourceId }= React.useContext(DataSourceContext);
+  // console.log("lois", dataSourceId)
+
+  // const { setBase } = React.useContext(BaseContext);
+  //  // Update the base value here
+  //  const handleBaseChange = () => {
+  //   setBase("new base value");
+  // };
+
+  // console.log("lois", base)
+
   const [input, setInput] = useState("")
   const [open, setOpen] = useState(false);
   const [copiedStates, setCopiedStates] = useState({});
@@ -42,47 +53,6 @@ export default function ChatBox() {
      setChatHistory((history) => [...history, data]);
      setInput("");
   }
-
-  // async function postquery() {
-  //   const query_data = {
-  //       "name": "Testing",
-  //       "query": "select * from sales;",
-  //       "schedule": {"interval": "3600"},
-  //       "data_source_id": "1",
-  //   }
-  //   const response = await Chat.createquery(query_data)
-  //   // console.log("output", response)
-  //   executequery(response.id)
-  // }
-
-  // async function executequery(qry_id) {
-  //   const queryData = {
-  //     query: "SELECT * FROM sales",
-  //     query_id: qry_id,
-  //     max_age: 0, 
-  //     data_source_id: "1",
-  //     parameters: {}, 
-  //     apply_auto_limit: false 
-  //   };
-  
-  //   const response = await Chat.postqryResult(queryData);
-  //   let jobId = response.job.id;
-  //   let resultId = null;
-  //   if (resultId === null) {
-  //     try {
-  //       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
-  //       const jobResponse = await Chat.getjob(jobId);
-  //       resultId = jobResponse.job.result_id;
-  //       let res = await Chat.fetchqryResult(resultId)
-  //       console.log("query result", res)
-  //     } catch(error){
-  //       console.log("error", error)
-  //     }
-  //   } else {}
-  
-    
-  // }
-
   const handleCopy = (content) => {
     copy(content);
     const updatedCopiedStates = { ...copiedStates };
@@ -93,24 +63,97 @@ export default function ChatBox() {
       const revertedCopiedStates = { ...copiedStates };
       revertedCopiedStates[content] = false;
       setCopiedStates(revertedCopiedStates);
-    }, 2000); // Change the duration (in milliseconds) as needed
+    }, 2000); // Change the duration (in milliseconds) as needed write an sql query for displaying the sales table?
+  };
+
+  const AnswerParts = (answer) => {
+    // const answer = "sql\nSELECT *\nFROM sales\n";
+    const parts = [];
+    const codeRegex = /```([\s\S]*?)```/g;
+  
+    let match;
+    let lastIndex = 0;
+    let querySyntax = '';
+    let dataSourceId = '1';
+  
+    while ((match = codeRegex.exec(answer))) {
+      const codeContent = match[1].trim();
+  
+      if (match.index > lastIndex) {
+        const textContent = answer.substring(lastIndex, match.index).trim();
+        parts.push({ type: 'text', content: textContent });
+      }
+  
+      const [firstWord, ...rest] = codeContent.split(/\s+/);
+      querySyntax = rest.join(' ');
+      if (querySyntax !== '') {
+        console.log('movein',"querySyntax");
+        // postquery(querySyntax, dataSourceId);
+      }
+   
+      parts.push({ type: 'code', firstWord, content: rest.join(' ') });
+  
+      lastIndex = match.index + match[0].length;
+    }
+
+ 
+    querySyntax = ''
+    if (lastIndex < answer.length) {
+      const textContent = answer.substring(lastIndex).trim();
+      parts.push({ type: 'text', content: textContent });
+      console.log('in',"querySyntax");
+    }
+  
+    return parts;
   };
 
 
-  const visual = async() => {
-    const newVisualizationData = {
-      query_id: 4,
-      type: "line",
-      name: "JIMMY",
-      x_axis: "year",
-      y_axis: [
-        {
-        name: "count"
-        }
-      ]
-      };
+  const postquery = async() => {  
+    let querySyntax = 'SELECT * FROM sales';
+    let dataSourceId = '1';
+    const query_data = {
+        "name": `Chat Query`,
+        "query": querySyntax,
+        "schedule": {"interval": "3600"},
+        "data_source_id": dataSourceId,
+        "visualizations": {}
+    }
+    const response = await Chat.createquery(query_data)
+    console.log("chatbox", response)
+    executequery(response.id, querySyntax, dataSourceId)
+    visual(response.id)
+  }
+
+  const executequery = async(qry_id, querySyntax, dataSourceId) => {
+    const queryData = {
+      query: querySyntax,
+      query_id: qry_id,
+      max_age: 0, 
+      data_source_id: dataSourceId,
+      parameters: {}, 
+      apply_auto_limit: false 
+    };
+    const response = await Chat.postqryResult(queryData);
+    let jobId = response.job.id;
+    let resultId = null;
+    if (resultId === null) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+        const jobResponse = await Chat.getjob(jobId);
+        resultId = jobResponse.job.result_id;
+        let result = await Chat.fetchqryResult(resultId)
+        const passdata = {
+          data: result
+        };
+        const final = await Chat.DataToGpt(passdata) 
+      } catch(error){}
+    } else {} 
+  }
+
+  const visual = async(qry_id) => {
+    const _type = "area"
     const potions = {
-      "globalSeriesType": "box",
+      "globalSeriesType": _type,
       "sortX": true,
       "legend": {"enabled": true},
       "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": true}],
@@ -122,7 +165,7 @@ export default function ChatBox() {
       "seriesOptions": {
         count: {
           name: "count",
-          type: "box",
+          type: _type,
           index: 0,
           yAxis: 0,
           zIndex: 0
@@ -131,45 +174,15 @@ export default function ChatBox() {
       "showDataLabels": false
   }
     const visualizationConfig = {
-      query_id: 4,
-      name: "PIMMY",
+      type: "CHART",
+      query_id: qry_id,
+      name: "TestVis",
       description: "",
       options: potions
     };
     
     const response = await Chat.visualize(visualizationConfig)
-    console.log("result", response);
-  };
-  
-
-  const AnswerParts = (answer) => {
-    const parts = [];
-    const codeRegex = /```([\s\S]*?)```/g;
-  
-    let match;
-    let lastIndex = 0;
-  
-    while ((match = codeRegex.exec(answer))) {
-      const codeContent = match[1].trim();
-  
-      if (match.index > lastIndex) {
-        const textContent = answer.substring(lastIndex, match.index).trim();
-        parts.push({ type: 'text', content: textContent });
-      }
-            
-      const [firstWord, ...rest] = codeContent.split(/\s+/);
-
-      parts.push({ type: 'code', firstWord, content: rest.join(' ') });
-  
-      lastIndex = match.index + match[0].length;
-    }
-  
-    if (lastIndex < answer.length) {
-      const textContent = answer.substring(lastIndex).trim();
-      parts.push({ type: 'text', content: textContent });
-    }
-       
-    return parts;
+    // console.log("result", response);
   };
   
 
@@ -179,7 +192,7 @@ export default function ChatBox() {
       <div className='chatcontainer'>
         <div>
             <div className='headbox'>
-              <p onClick={visual}>query, visualize with AI</p>                   
+              <p onClick={AnswerParts}>query, visualize with AI</p>                   
             </div>
             
 

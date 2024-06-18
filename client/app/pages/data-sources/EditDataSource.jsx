@@ -14,6 +14,7 @@ import wrapSettingsTab from "@/components/SettingsWrapper";
 import DataSource, { IMG_ROOT } from "@/services/data-source";
 import notification from "@/services/notification";
 import routes from "@/services/routes";
+import { BaseContext } from "@/context/DataSourceContext";
 
 class EditDataSource extends React.Component {
   static propTypes = {
@@ -109,10 +110,12 @@ class EditDataSource extends React.Component {
         "query": `select * from ${tableName}`,
         "schedule": {"interval": "3600"},
         "data_source_id": this.props.dataSourceId,
+        "visualizations": {}
     }
     const response = await Chat.createquery(query_data)
     console.log("i hear", response)
     this.executequery(response.id)
+    // this.visual(response.id)
   }
 
   executequery = async(qry_id) => {
@@ -142,6 +145,41 @@ class EditDataSource extends React.Component {
     } else {} 
   }
 
+  visual = async(qry_id) => {
+    const _type = "area"
+    const potions = {
+      "globalSeriesType": _type,
+      "sortX": true,
+      "legend": {"enabled": true},
+      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": true}],
+      "xAxis": {"type": "category", "labels": {"enabled": true}},
+      "error_y": {"type": "data", "visible": true},
+      "series": {"stacking": null, "error_y": {"type": "data", "visible": true}},
+      "columnMapping": { "year": "x",
+        "count": "y"},
+      "seriesOptions": {
+        count: {
+          name: "count",
+          type: _type,
+          index: 0,
+          yAxis: 0,
+          zIndex: 0
+        }
+      },
+      "showDataLabels": false
+  }
+    const visualizationConfig = {
+      type: "CHART",
+      query_id: qry_id,
+      name: "TestVis",
+      description: "",
+      options: potions
+    };
+    
+    const response = await Chat.visualize(visualizationConfig)
+    console.log("result", response);
+  };
+
   fetchSchema = async() => {
     const response = await Chat.fetchSchema(this.props.dataSourceId);
     const tableName = response['schema'][0]['name']
@@ -149,6 +187,7 @@ class EditDataSource extends React.Component {
   }
 
   renderForm() {
+    // const { base } = React.useContext(BaseContext);
     const { dataSource, type } = this.state;
     const fields = helper.getFields(type, dataSource);  
     const helpTriggerType = `DS_${toUpper(type.type)}`;
@@ -163,26 +202,30 @@ class EditDataSource extends React.Component {
       feedbackIcons: true,
       defaultShowExtraFields: helper.hasFilledExtraField(type, dataSource),
     };
-
-  
+    // const base = "hey"  //value={{dataSourceId: this.props.dataSourceId || "1"}}
     return (
-      <div className="row" data-test="DataSource">
-        <div className="text-right m-r-10">
-          {HELP_TRIGGER_TYPES[helpTriggerType] && (
-            <HelpTrigger className="f-13" type={helpTriggerType}>
-              Setup Instructions <i className="fa fa-question-circle" aria-hidden="true" />
-              <span className="sr-only">(help)</span>
-            </HelpTrigger>
-          )}
+      // <DataSourceContext.Provider value={base}>
+        <div className="row" data-test="DataSource">
+          <div className="text-right m-r-10">
+            {HELP_TRIGGER_TYPES[helpTriggerType] && (
+              <HelpTrigger className="f-13" type={helpTriggerType}>
+                Setup Instructions <i className="fa fa-question-circle" aria-hidden="true" />
+                <span className="sr-only">(help)</span>
+              </HelpTrigger>
+            )}
+          </div>
+
+          {/* <div>{base}</div> */}
+
+          <div className="text-center m-b-10">
+            <img className="p-5" src={`${IMG_ROOT}/${type.type}.png`} alt={type.name} width="64" />
+            <h3 className="m-0">{type.name}</h3>
+          </div>
+          <div className="col-md-4 col-md-offset-4 m-b-10">
+            <DynamicForm {...formProps} />
+          </div>
         </div>
-        <div className="text-center m-b-10">
-          <img className="p-5" src={`${IMG_ROOT}/${type.type}.png`} alt={type.name} width="64" />
-          <h3 className="m-0">{type.name}</h3>
-        </div>
-        <div className="col-md-4 col-md-offset-4 m-b-10">
-          <DynamicForm {...formProps} />
-        </div>
-      </div>
+      // </DataSourceContext.Provider>
     );
   }
 

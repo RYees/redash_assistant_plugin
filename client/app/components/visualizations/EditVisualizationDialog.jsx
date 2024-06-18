@@ -21,8 +21,6 @@ import { Renderer, Editor } from "@/components/visualizations/visualizationCompo
 import "./EditVisualizationDialog.less";
 import Chat from "@/services/chat";
 
-console.log("higher", getDefaultVisualization())
-
 function updateQueryVisualizations(query, visualization) {
   const index = findIndex(query.visualizations, v => v.id === visualization.id);
   if (index > -1) {
@@ -135,49 +133,15 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
       visualizationOptions = omit(visualizationOptions, ["paginationSize"]);
     }
 
-    // type = "line";
-    // options = {
-    //   x_axis: "year",
-    //   y_axis: [
-    //     {
-    //     name: "count"
-    //     }
-    //   ]
-    // }
-
     const visualizationData = extend(newVisualization(type), visualization, {
-      name: "killed",
+      name,
       options: visualizationOptions,
-      query_id: 4,
+      query_id: query.id,
     });
-    console.log("new it", type, visualization)
-    console.log("new", visualizationData)
     saveVisualization(visualizationData).then(savedVisualization => {
       updateQueryVisualizations(query, savedVisualization);
       dialog.close(savedVisualization);
     });
-  }
-
-  async function visual() {
-    let visualizationOptions = options;
-    // if (type === "TABLE") {
-    //   visualizationOptions = omit(visualizationOptions, ["paginationSize"]);
-    // }
-
-    const visualData = {
-      type: 'line',
-      name: "dop",
-      options: options,
-      query_id: 4,
-    };
-    console.log("viz", visualData)
-    // const response = await Chat.visualize(visualData);
-    // const response = await Visualization.save(visualData)
-    // response.then(savedVisualization => {updateQueryVisualizations(query, savedVisualization);});
-    saveVisualization(visualData).then(savedVisualization => {
-      updateQueryVisualizations(query, savedVisualization);
-    });
-    // console.log("lower",  response)
   }
 
   function dismiss() {
@@ -212,7 +176,6 @@ function EditVisualizationDialog({ dialog, visualization, query, queryResult }) 
       <div className="edit-visualization-dialog">
         <div className="visualization-settings">
           <div className="m-b-15">
-            <h1 onClick={save}>Click</h1>
             <label htmlFor={vizTypeId}>Visualization Type</label>
             <Select
               data-test="VisualizationType"

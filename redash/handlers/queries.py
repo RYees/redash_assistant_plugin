@@ -242,7 +242,7 @@ class QueryListResource(BaseQueryListResource):
 
         self.record_event({"action": "create", "object_id": query.id, "object_type": "query"})
 
-        return QuerySerializer(query, with_visualizations=True).serialize()
+        return QuerySerializer(query).serialize()
 
 
 class QueryArchiveResource(BaseQueryListResource):
