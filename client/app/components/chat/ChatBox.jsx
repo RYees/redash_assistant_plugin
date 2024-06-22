@@ -101,7 +101,6 @@ export default function ChatBox() {
     if (lastIndex < answer.length) {
       const textContent = answer.substring(lastIndex).trim();
       parts.push({ type: 'text', content: textContent });
-      console.log('in',"querySyntax");
     }
   
     return parts;

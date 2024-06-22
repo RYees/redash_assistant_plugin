@@ -1162,7 +1162,6 @@ class Dashboard(ChangeTrackingMixin, TimestampMixin, BelongsToOrgMixin, db.Model
         "The SQLAlchemy expression for the property above."
         return func.lower(cls.name)
 
-
 @generic_repr("id", "name", "type", "query_id")
 class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
     id = primary_key("Visualization")
@@ -1190,8 +1189,7 @@ class Visualization(TimestampMixin, BelongsToOrgMixin, db.Model):
             "description": self.description,
             "options": self.options,
         }
-
-
+      
 @generic_repr("id", "visualization_id", "dashboard_id")
 class Widget(TimestampMixin, BelongsToOrgMixin, db.Model):
     id = primary_key("Widget")
@@ -1219,7 +1217,6 @@ class Widget(TimestampMixin, BelongsToOrgMixin, db.Model):
             "visualization_id": self.visualization_id,
             "dashboard_id": dashboard_id,
         }
-
 
 @generic_repr("id", "object_type", "object_id", "action", "user_id", "org_id", "created_at")
 class Event(db.Model):

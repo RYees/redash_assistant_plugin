@@ -43,24 +43,7 @@ def load_extensions(db):
             connection.execute(f'CREATE EXTENSION IF NOT EXISTS "{extension}";')
 
 
-@manager.command(name="create_tables")
-def create_tables():
-    """Create the database tables."""
-    from redash.models import db
-
-    _wait_for_db_connection(db)
-
-    # We need to make sure we run this only if the DB is empty, because otherwise calling
-    # stamp() will stamp it with the latest migration value and migrations won't run.
-    if is_db_empty():
-        load_extensions(db)
-
-        # To create triggers for searchable models, we need to call configure_mappers().
-        sqlalchemy.orm.configure_mappers()
-        db.create_all()
-
-        # Need to mark current DB as up to date
-        stamp()
+e
 
 
 @manager.command(name="drop_tables")
