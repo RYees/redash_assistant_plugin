@@ -43,16 +43,18 @@ export default function ChatBox() {
 
   async function chatWithOpenai(text) {
     const requestOptions = {
-        question: text
+        question: text,
+        history: chatHistory
     };
     const response = await Chat.openai(requestOptions);
     const data = {
       sender: "bot",
-      text: response.answer
+      text: response
     };
      setChatHistory((history) => [...history, data]);
      setInput("");
   }
+
   const handleCopy = (content) => {
     copy(content);
     const updatedCopiedStates = { ...copiedStates };
@@ -105,7 +107,6 @@ export default function ChatBox() {
   
     return parts;
   };
-
 
   const postquery = async() => {  
     let querySyntax = 'SELECT * FROM sales';
