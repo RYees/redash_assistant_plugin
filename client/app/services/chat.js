@@ -2,7 +2,6 @@ import { axios } from "@/services/axios";
    
 const Chat = {
   openai: data => axios.post('api/chat', data),
-  DataToGpt: data => axios.post('api/data_to_gpt', data),
   createquery: data => axios.post('api/queries', data),
   resultById: data => axios.get(`api/queries/${data}/results.json`),
   fetchqryResult: data => axios.get(`/api/query_results/${data}`),

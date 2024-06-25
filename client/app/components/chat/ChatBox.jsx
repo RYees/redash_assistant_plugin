@@ -1,4 +1,4 @@
-import React,{useContext, useState} from 'react'
+import React,{useContext, useState, useEffect} from 'react'
 import redashpng from "@/assets/images/favicon-96x96.png";
 import './chatbox.less'
 import Chat from '@/services/chat';
@@ -7,25 +7,24 @@ import { FaCheck } from "react-icons/fa6";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import copy from 'copy-to-clipboard';
-// import { BaseContext } from '@/context/DataSourceContext';
 
 export default function ChatBox() {
-  // const { dataSourceId }= React.useContext(DataSourceContext);
-  // console.log("lois", dataSourceId)
-
-  // const { setBase } = React.useContext(BaseContext);
-  //  // Update the base value here
-  //  const handleBaseChange = () => {
-  //   setBase("new base value");
-  // };
-
-  // console.log("lois", base)
-
   const [input, setInput] = useState("")
   const [open, setOpen] = useState(false);
   const [copiedStates, setCopiedStates] = useState({});
   const [chatHistory, setChatHistory] = useState([]);
+  const [dataToModel, setDataToModel] = useState({});
+  const [answeredParts, setAnsweredParts] = useState([]);
 
+  useEffect(() => {
+    const dataFromStorage = JSON.parse(localStorage.getItem("DataToModel"));
+    if (dataFromStorage !== null) {
+      setDataToModel(dataFromStorage);
+    } else {
+      // console.log("local storage empty");
+    }
+  }, []);
+    
   const handler = (event) => {
     if (event.keyCode === 13) {      
       handleChatInput();
@@ -40,19 +39,30 @@ export default function ChatBox() {
       setInput("");  
     }
   }
-
-  async function chatWithOpenai(text) {
-    const requestOptions = {
+  
+  async function chatWithOpenai(text) {   
+      const requestOptions = {
         question: text,
-        history: chatHistory
-    };
-    const response = await Chat.openai(requestOptions);
-    const data = {
-      sender: "bot",
-      text: response
-    };
-     setChatHistory((history) => [...history, data]);
-     setInput("");
+        history: chatHistory,
+        database: dataToModel.data
+      };
+
+      const response = await Chat.openai(requestOptions); 
+      const parts = AnswerParts(response.answer);
+      
+      const data = {
+        sender: "bot",
+        parts
+      };
+      setChatHistory((history) => [...history, data]);
+      setInput("");   
+      
+      const codePartExists = parts.some((part) => part.type === 'code');
+      if (codePartExists) {
+        const codeParts = parts.filter((part) => part.type === 'code');
+        const codeContent = codeParts.map((part) => part.content).join('\n');
+        postquery(codeContent);
+      }         
   }
 
   const handleCopy = (content) => {
@@ -68,15 +78,13 @@ export default function ChatBox() {
     }, 2000); // Change the duration (in milliseconds) as needed write an sql query for displaying the sales table?
   };
 
-  const AnswerParts = (answer) => {
-    // const answer = "sql\nSELECT *\nFROM sales\n";
-    const parts = [];
-    const codeRegex = /```([\s\S]*?)```/g;
   
+  const AnswerParts = (answer) => {   
+    const parts = [];
+    const codeRegex = /```([\s\S]*?)```/g;  
     let match;
     let lastIndex = 0;
     let querySyntax = '';
-    let dataSourceId = '1';
   
     while ((match = codeRegex.exec(answer))) {
       const codeContent = match[1].trim();
@@ -88,48 +96,41 @@ export default function ChatBox() {
   
       const [firstWord, ...rest] = codeContent.split(/\s+/);
       querySyntax = rest.join(' ');
-      if (querySyntax !== '') {
-        console.log('movein',"querySyntax");
-        // postquery(querySyntax, dataSourceId);
-      }
-   
-      parts.push({ type: 'code', firstWord, content: rest.join(' ') });
-  
+     
+      parts.push({ type: 'code', firstWord, content: rest.join(' ') }); 
       lastIndex = match.index + match[0].length;
     }
-
  
     querySyntax = ''
     if (lastIndex < answer.length) {
       const textContent = answer.substring(lastIndex).trim();
       parts.push({ type: 'text', content: textContent });
     }
-  
+    
     return parts;
   };
+  
 
-  const postquery = async() => {  
-    let querySyntax = 'SELECT * FROM sales';
-    let dataSourceId = '1';
+  const postquery = async(querySyntax) => {
     const query_data = {
         "name": `Chat Query`,
-        "query": querySyntax,
+        "query": querySyntax.toString(),
         "schedule": {"interval": "3600"},
-        "data_source_id": dataSourceId,
+        "data_source_id": dataToModel.id,
         "visualizations": {}
     }
+  
     const response = await Chat.createquery(query_data)
-    console.log("chatbox", response)
-    executequery(response.id, querySyntax, dataSourceId)
+    executequery(response.id, querySyntax)
     visual(response.id)
   }
 
-  const executequery = async(qry_id, querySyntax, dataSourceId) => {
+  const executequery = async(qry_id, querySyntax) => {
     const queryData = {
       query: querySyntax,
       query_id: qry_id,
       max_age: 0, 
-      data_source_id: dataSourceId,
+      data_source_id: dataToModel.id,
       parameters: {}, 
       apply_auto_limit: false 
     };
@@ -145,7 +146,7 @@ export default function ChatBox() {
         const passdata = {
           data: result
         };
-        const final = await Chat.DataToGpt(passdata) 
+        // const final = await Chat.DataToGpt(passdata) 
       } catch(error){}
     } else {} 
   }
@@ -182,76 +183,71 @@ export default function ChatBox() {
     };
     
     const response = await Chat.visualize(visualizationConfig)
-    // console.log("result", response);
   };
   
-
   return (
     <>
       {open?
       <div className='chatcontainer'>
         <div>
             <div className='headbox'>
-              <p onClick={AnswerParts}>query, visualize with AI</p>                   
+              <p>query, visualize with AI</p>                   
             </div>
             
-
-            <div className='chatbox'> 
-              {chatHistory.map((chat, index) => (
-                <div key={index} className="chatcontain">
-                  {chat.sender === "user" ? (
+            <div className='chatbox'>
+              {chatHistory.map((message, index) => (
+                <div key={index} className={`chatcontain ${message.sender}`}>
+                  {message.sender === "user" ? (
                     <div className="user">
-                      <div className="">
-                        <p className="parauser">{chat?.text}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className='ai'>
-                      <div className="">
-                        {chat?.text && (
-                          <div>
-                            {AnswerParts(chat.text).map((part, partIndex) => (
-                              <React.Fragment key={partIndex}>
-                                {part.type === 'code' ? (
-                                  <div className="">
-                                    <div className='chat-head'>
-                                        <div className='copy' onClick={() => handleCopy(part.content)}>
-                                          {copiedStates[part.content] ? (
-                                            <FaCheck className='check'/>
-                                          ) : (
-                                            <IoCopy className='copyicon'/>
-                                          )}
-                                        </div>
-                                        <div className=''>
-                                          {part.firstWord}
-                                        </div>                            
+                     <div className="">
+                       <p className="parauser">{message.text}</p>
+                     </div>
+                   </div>
+                  ):(
+                  <div className='ai'>
+                    {message.sender === "bot" && (
+                      <>
+                        {message.parts.map((part, partIndex) => (
+                          <div key={partIndex}>                          
+                            {part.type === 'code' ? (
+                              <div className="">
+                                <div className='chat-head'>
+                                    <div className='copy' onClick={() => handleCopy(part.content)}>
+                                      {copiedStates[part.content] ? (
+                                        <FaCheck className='check'/>
+                                      ) : (
+                                        <IoCopy className='copyicon'/>
+                                      )}
                                     </div>
-                                    <SyntaxHighlighter
-                                      language={part.firstWord}
-                                      style={docco}
-                                      className='x-container'
-                                      customStyle={{
-                                        fontSize: '14px',
-                                        lineHeight: '1.5',
-                                        maxWidth: '200%',
-                                        wordBreak: 'break-word',
-                                        overflowWrap: 'break-word',
-                                        whiteSpace: 'pre-wrap',
-                                        overflow: 'auto'
-                                      }}
-                                    >
-                                      {part.content}
-                                    </SyntaxHighlighter>
-                                  </div>
-                                ) : (
-                                  <p>{part.content}</p>
-                                )}
-                              </React.Fragment>
-                            ))}
+                                    <div className=''>
+                                      {part.firstWord}
+                                    </div>                            
+                                </div>
+                                <SyntaxHighlighter
+                                  language={part.firstWord}
+                                  style={docco}
+                                  className='x-container'
+                                  customStyle={{
+                                    fontSize: '14px',
+                                    lineHeight: '1.5',
+                                    maxWidth: '200%',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                                    whiteSpace: 'pre-wrap',
+                                    overflow: 'auto'
+                                  }}
+                                >
+                                  {part.content}
+                                </SyntaxHighlighter>
+                              </div>
+                            ):(
+                              <p>{part.content}</p>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
                   )}
                 </div>
               ))}

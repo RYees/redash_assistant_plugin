@@ -14,7 +14,6 @@ import wrapSettingsTab from "@/components/SettingsWrapper";
 import DataSource, { IMG_ROOT } from "@/services/data-source";
 import notification from "@/services/notification";
 import routes from "@/services/routes";
-import { BaseContext } from "@/context/DataSourceContext";
 
 class EditDataSource extends React.Component {
   static propTypes = {
@@ -34,7 +33,10 @@ class EditDataSource extends React.Component {
   };
 
   componentDidMount() {
-    this.fetchSchema();
+    if(this.props.dataSource !== null){
+      this.fetchSchema();
+    }
+    
     DataSource.get({ id: this.props.dataSourceId })
       .then(dataSource => {
         const { type } = dataSource;
@@ -82,6 +84,11 @@ class EditDataSource extends React.Component {
   };
 
   testConnection = callback => {
+    const dataToModel = localStorage.getItem("DataToModel");
+    if (dataToModel !== null) {
+      localStorage.removeItem("DataToModel");
+    } 
+
     const { dataSource } = this.state;
     DataSource.test({ id: dataSource.id })
       .then(httpResponse => {
@@ -113,9 +120,7 @@ class EditDataSource extends React.Component {
         "visualizations": {}
     }
     const response = await Chat.createquery(query_data)
-    console.log("i hear", response)
     this.executequery(response.id)
-    // this.visual(response.id)
   }
 
   executequery = async(qry_id) => {
@@ -138,47 +143,14 @@ class EditDataSource extends React.Component {
         resultId = jobResponse.job.result_id;
         let result = await Chat.fetchqryResult(resultId)
         const passdata = {
-          data: result
+          data: result,
+          id: this.props.dataSourceId
         };
-        const final = await Chat.DataToGpt(passdata) 
+        const passDataJSON = JSON.stringify(passdata);
+        localStorage.setItem("DataToModel", passDataJSON);
       } catch(error){}
     } else {} 
   }
-
-  visual = async(qry_id) => {
-    const _type = "area"
-    const potions = {
-      "globalSeriesType": _type,
-      "sortX": true,
-      "legend": {"enabled": true},
-      "yAxis": [{"type": "linear"}, {"type": "linear", "opposite": true}],
-      "xAxis": {"type": "category", "labels": {"enabled": true}},
-      "error_y": {"type": "data", "visible": true},
-      "series": {"stacking": null, "error_y": {"type": "data", "visible": true}},
-      "columnMapping": { "year": "x",
-        "count": "y"},
-      "seriesOptions": {
-        count: {
-          name: "count",
-          type: _type,
-          index: 0,
-          yAxis: 0,
-          zIndex: 0
-        }
-      },
-      "showDataLabels": false
-  }
-    const visualizationConfig = {
-      type: "CHART",
-      query_id: qry_id,
-      name: "TestVis",
-      description: "",
-      options: potions
-    };
-    
-    const response = await Chat.visualize(visualizationConfig)
-    console.log("result", response);
-  };
 
   fetchSchema = async() => {
     const response = await Chat.fetchSchema(this.props.dataSourceId);
@@ -187,7 +159,6 @@ class EditDataSource extends React.Component {
   }
 
   renderForm() {
-    // const { base } = React.useContext(BaseContext);
     const { dataSource, type } = this.state;
     const fields = helper.getFields(type, dataSource);  
     const helpTriggerType = `DS_${toUpper(type.type)}`;
@@ -202,9 +173,8 @@ class EditDataSource extends React.Component {
       feedbackIcons: true,
       defaultShowExtraFields: helper.hasFilledExtraField(type, dataSource),
     };
-    // const base = "hey"  //value={{dataSourceId: this.props.dataSourceId || "1"}}
+
     return (
-      // <DataSourceContext.Provider value={base}>
         <div className="row" data-test="DataSource">
           <div className="text-right m-r-10">
             {HELP_TRIGGER_TYPES[helpTriggerType] && (
@@ -215,8 +185,6 @@ class EditDataSource extends React.Component {
             )}
           </div>
 
-          {/* <div>{base}</div> */}
-
           <div className="text-center m-b-10">
             <img className="p-5" src={`${IMG_ROOT}/${type.type}.png`} alt={type.name} width="64" />
             <h3 className="m-0">{type.name}</h3>
@@ -225,7 +193,6 @@ class EditDataSource extends React.Component {
             <DynamicForm {...formProps} />
           </div>
         </div>
-      // </DataSourceContext.Provider>
     );
   }
 
