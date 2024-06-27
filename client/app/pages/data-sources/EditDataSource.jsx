@@ -33,9 +33,13 @@ class EditDataSource extends React.Component {
   };
 
   componentDidMount() {
-    if(this.props.dataSource !== null){
-      this.fetchSchema();
-    }
+    // const dataToModel = localStorage.getItem("DataSourceId");
+    // if (dataToModel !== null) {
+    //   localStorage.removeItem("DataSourceId");
+    // } 
+    // if(this.props.dataSourceId !== null){
+    //   localStorage.setItem("DataSourceId", this.props.dataSourceId);
+    // }
     
     DataSource.get({ id: this.props.dataSourceId })
       .then(dataSource => {
@@ -84,17 +88,15 @@ class EditDataSource extends React.Component {
   };
 
   testConnection = callback => {
-    const dataToModel = localStorage.getItem("DataToModel");
-    if (dataToModel !== null) {
-      localStorage.removeItem("DataToModel");
-    } 
-
     const { dataSource } = this.state;
     DataSource.test({ id: dataSource.id })
       .then(httpResponse => {
         if (httpResponse.ok) {
           notification.success("Success");
-          this.postquery();
+
+          if(this.props.dataSourceId !== null){
+            this.fetchSchema();
+          }
         } else {
           notification.error("Connection Test Failed:", httpResponse.message, { duration: 10 });
         }
@@ -110,52 +112,55 @@ class EditDataSource extends React.Component {
       });
   };
 
-  postquery = async() => {  
-    const { tableName } = this.state;
-    const query_data = {
-        "name": `Chat Query`,
-        "query": `select * from ${tableName}`,
-        "schedule": {"interval": "3600"},
-        "data_source_id": this.props.dataSourceId,
-        "visualizations": {}
-    }
-    const response = await Chat.createquery(query_data)
-    this.executequery(response.id)
-  }
+  // postquery = async() => {  
+  //   const { tableName } = this.state;
+  //   const query_data = {
+  //       "name": `Chat Query`,
+  //       "query": `select * from ${tableName}`,
+  //       "schedule": {"interval": "3600"},
+  //       "data_source_id": this.props.dataSourceId,
+  //       "visualizations": {}
+  //   }
+  //   const response = await Chat.createquery(query_data)
+  //   this.executequery(response.id)
+  // }
 
-  executequery = async(qry_id) => {
-    const { tableName } = this.state;
-    const queryData = {
-      query: `select * from ${tableName}`,
-      query_id: qry_id,
-      max_age: 0, 
-      data_source_id: this.props.dataSourceId,
-      parameters: {}, 
-      apply_auto_limit: false 
-    };
-    const response = await Chat.postqryResult(queryData);
-    let jobId = response.job.id;
-    let resultId = null;
-    if (resultId === null) {
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
-        const jobResponse = await Chat.getjob(jobId);
-        resultId = jobResponse.job.result_id;
-        let result = await Chat.fetchqryResult(resultId)
-        const passdata = {
-          data: result,
-          id: this.props.dataSourceId
-        };
-        const passDataJSON = JSON.stringify(passdata);
-        localStorage.setItem("DataToModel", passDataJSON);
-      } catch(error){}
-    } else {} 
-  }
+  // executequery = async(qry_id) => {
+  //   const { tableName } = this.state;
+  //   const queryData = {
+  //     query: `select * from ${tableName}`,
+  //     query_id: qry_id,
+  //     max_age: 0, 
+  //     data_source_id: this.props.dataSourceId,
+  //     parameters: {}, 
+  //     apply_auto_limit: false 
+  //   };
+  //   const response = await Chat.postqryResult(queryData);
+  //   let jobId = response.job.id;
+  //   let resultId = null;
+  //   if (resultId === null) {
+  //     try {
+  //       await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for 1 second
+  //       const jobResponse = await Chat.getjob(jobId);
+  //       resultId = jobResponse.job.result_id;
+  //       let result = await Chat.fetchqryResult(resultId)
+  //       const passdata = {
+  //         data: result,
+  //         id: this.props.dataSourceId
+  //       };
+  //       const passDataJSON = JSON.stringify(passdata);
+  //       localStorage.setItem("DataToModel", passDataJSON);
+  //     } catch(error){}
+  //   } else {} 
+  // }
 
   fetchSchema = async() => {
-    const response = await Chat.fetchSchema(this.props.dataSourceId);
-    const tableName = response['schema'][0]['name']
-    this.setState({ tableName });  
+    localStorage.setItem("schemas", "");
+    const response = await Chat.fetchSchema(this.props.dataSourceId);  
+    const responseJSON = JSON.stringify(response);
+    const schemas = localStorage.setItem("schemas", responseJSON);
+    // const tableName = response['schema'][0]['name']
+    // this.setState({ tableName });  
   }
 
   renderForm() {

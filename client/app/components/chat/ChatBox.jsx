@@ -7,23 +7,32 @@ import { FaCheck } from "react-icons/fa6";
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import copy from 'copy-to-clipboard';
+import { Schema } from '../proptypes';
 
 export default function ChatBox() {
   const [input, setInput] = useState("")
   const [open, setOpen] = useState(false);
+  const [show, setShow] = useState(false);
   const [copiedStates, setCopiedStates] = useState({});
   const [chatHistory, setChatHistory] = useState([]);
   const [dataToModel, setDataToModel] = useState({});
+  const [dataSourceId, setDataSourceId] = useState();
   const [answeredParts, setAnsweredParts] = useState([]);
+  const [schemas, setSchema] = useState([]);
 
   useEffect(() => {
-    const dataFromStorage = JSON.parse(localStorage.getItem("DataToModel"));
-    if (dataFromStorage !== null) {
-      setDataToModel(dataFromStorage);
-    } else {
-      // console.log("local storage empty");
-    }
+    const DataSourceId = JSON.parse(localStorage.getItem("DataSourceId"));
+    const schemas = JSON.parse(localStorage.getItem("schemas"));
+    if (DataSourceId !== null) {
+      setDataSourceId(DataSourceId);
+    } else {}
+
+    if (schemas !== null) {
+      setSchema(schemas["schema"]);
+    } else {}
+
   }, []);
+  console.log("dont", schemas)
     
   const handler = (event) => {
     if (event.keyCode === 13) {      
@@ -44,7 +53,7 @@ export default function ChatBox() {
       const requestOptions = {
         question: text,
         history: chatHistory,
-        database: dataToModel.data
+        database: dataToModel
       };
 
       const response = await Chat.openai(requestOptions); 
@@ -61,7 +70,7 @@ export default function ChatBox() {
       if (codePartExists) {
         const codeParts = parts.filter((part) => part.type === 'code');
         const codeContent = codeParts.map((part) => part.content).join('\n');
-        postquery(codeContent);
+        postquery(null, codeContent);
       }         
   }
 
@@ -110,27 +119,56 @@ export default function ChatBox() {
     return parts;
   };
   
-
-  const postquery = async(querySyntax) => {
-    const query_data = {
+  const postquery = async(name = null, querySyntax = null) => {
+    let query_data = {
         "name": `Chat Query`,
-        "query": querySyntax.toString(),
+        "query": null,
         "schedule": {"interval": "3600"},
-        "data_source_id": dataToModel.id,
+        "data_source_id": dataSourceId,
         "visualizations": {}
     }
-  
-    const response = await Chat.createquery(query_data)
-    executequery(response.id, querySyntax)
-    visual(response.id)
+    console.log("postquery", query_data)
+    if (querySyntax !== null) {
+        query_data.query = querySyntax;
+    } else if (name !== null) {
+        query_data.query = `select * from ${name}`;
+    } else {
+        // Both name and querySyntax are null, throw an error
+        throw new Error("Either schema name or querySyntax must be provided.");
+    }
+
+    const response = await Chat.createquery(query_data);
+
+    if (querySyntax !== null) {
+        await executequery(response.id, querySyntax);
+        await visual(response.id);
+    } else if (name !== null) {
+        await executequery(response.id, query_data.query);
+    }
+
+    return response;
   }
+  
+  // const postquery = async(name=null, querySyntax= null) => {
+  //   const query_data = {
+  //       "name": `Chat Query`,
+  //       "query": `select * from ${name}` || querySyntax.toString(),
+  //       "schedule": {"interval": "3600"},
+  //       "data_source_id": dataSourceId,
+  //       "visualizations": {}
+  //   }
+  
+  //   const response = await Chat.createquery(query_data)
+  //   executequery(response.id, querySyntax)
+  //   visual(response.id)
+  // }
 
   const executequery = async(qry_id, querySyntax) => {
     const queryData = {
       query: querySyntax,
       query_id: qry_id,
       max_age: 0, 
-      data_source_id: dataToModel.id,
+      data_source_id: dataSourceId,
       parameters: {}, 
       apply_auto_limit: false 
     };
@@ -143,10 +181,7 @@ export default function ChatBox() {
         const jobResponse = await Chat.getjob(jobId);
         resultId = jobResponse.job.result_id;
         let result = await Chat.fetchqryResult(resultId)
-        const passdata = {
-          data: result
-        };
-        // const final = await Chat.DataToGpt(passdata) 
+        setDataToModel(result)
       } catch(error){}
     } else {} 
   }
@@ -188,81 +223,100 @@ export default function ChatBox() {
   return (
     <>
       {open?
-      <div className='chatcontainer'>
-        <div>
-            <div className='headbox'>
-              <p>query, visualize with AI</p>                   
-            </div>
-            
-            <div className='chatbox'>
-              {chatHistory.map((message, index) => (
-                <div key={index} className={`chatcontain ${message.sender}`}>
-                  {message.sender === "user" ? (
-                    <div className="user">
-                     <div className="">
-                       <p className="parauser">{message.text}</p>
-                     </div>
-                   </div>
-                  ):(
-                  <div className='ai'>
-                    {message.sender === "bot" && (
-                      <>
-                        {message.parts.map((part, partIndex) => (
-                          <div key={partIndex}>                          
-                            {part.type === 'code' ? (
-                              <div className="">
-                                <div className='chat-head'>
-                                    <div className='copy' onClick={() => handleCopy(part.content)}>
-                                      {copiedStates[part.content] ? (
-                                        <FaCheck className='check'/>
-                                      ) : (
-                                        <IoCopy className='copyicon'/>
-                                      )}
-                                    </div>
-                                    <div className=''>
-                                      {part.firstWord}
-                                    </div>                            
+      <div className='main-box'>
+        {show?
+        <div className='schema-box'>
+          {schemas?.map((schema, index) => (
+              <div key={index} className="schema">
+                  <button className="schema-btn" onClick={()=>postquery(schema.name)}>{schema.name}</button>              
+              </div>
+          ))}
+        </div>:null}
+
+        <div className='three_lines' onClick={()=>setShow(!show)}>
+          <div className='lines'></div>
+          <div className='lines'></div>
+          <div className='lines'></div>
+        </div>
+
+        <div className='chatcontainer'>
+          <div>
+              <div className='chatbox'>
+                <div className='head_full'>
+                  <div className='headbox'>
+                    <p>query, visualize with AI</p>                   
+                  </div>
+                </div>
+
+                {chatHistory?.map((message, index) => (
+                  <div key={index} className={`chatcontain ${message.sender}`}>
+                    {message.sender === "user" ? (
+                      <div className="user">
+                      <div className="">
+                        <p className="parauser">{message.text}</p>
+                      </div>
+                    </div>
+                    ):(
+                    <div className='ai'>
+                      {message.sender === "bot" && (
+                        <>
+                          {message.parts.map((part, partIndex) => (
+                            <div key={partIndex}>                          
+                              {part.type === 'code' ? (
+                                <div className="">
+                                  <div className='chat-head'>
+                                      <div className='copy' onClick={() => handleCopy(part.content)}>
+                                        {copiedStates[part.content] ? (
+                                          <FaCheck className='check'/>
+                                        ) : (
+                                          <IoCopy className='copyicon'/>
+                                        )}
+                                      </div>
+                                      <div className=''>
+                                        {part.firstWord}
+                                      </div>                            
+                                  </div>
+                                  <SyntaxHighlighter
+                                    language={part.firstWord}
+                                    style={docco}
+                                    className='x-container'
+                                    customStyle={{
+                                      fontSize: '14px',
+                                      lineHeight: '1.5',
+                                      maxWidth: '200%',
+                                      wordBreak: 'break-word',
+                                      overflowWrap: 'break-word',
+                                      whiteSpace: 'pre-wrap',
+                                      overflow: 'auto'
+                                    }}
+                                  >
+                                    {part.content}
+                                  </SyntaxHighlighter>
                                 </div>
-                                <SyntaxHighlighter
-                                  language={part.firstWord}
-                                  style={docco}
-                                  className='x-container'
-                                  customStyle={{
-                                    fontSize: '14px',
-                                    lineHeight: '1.5',
-                                    maxWidth: '200%',
-                                    wordBreak: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    whiteSpace: 'pre-wrap',
-                                    overflow: 'auto'
-                                  }}
-                                >
-                                  {part.content}
-                                </SyntaxHighlighter>
-                              </div>
-                            ):(
-                              <p>{part.content}</p>
-                            )}
-                          </div>
-                        ))}
-                      </>
+                              ):(
+                                <p>{part.content}</p>
+                              )}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    </div>
                     )}
                   </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <div className='inputbox'>        
-              <input             
-                  className="input"    
-                  type="text"
-                  value={input}
-                  placeholder="Type your message…"
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => handler(e)}
-              />
-            </div>
+              <div className='inputbox'>        
+                <input             
+                    className="input"    
+                    type="text"
+                    value={input}
+                    placeholder="Type your message…"
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => handler(e)}
+                />
+              </div>
+          </div>
         </div>
       </div>
       :null}
