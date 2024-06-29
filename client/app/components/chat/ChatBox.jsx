@@ -1,4 +1,4 @@
-import React,{useContext, useState, useEffect} from 'react'
+import React,{useRef, useState, useEffect} from 'react'
 import redashpng from "@/assets/images/favicon-96x96.png";
 import './chatbox.less'
 import Chat from '@/services/chat';
@@ -8,8 +8,10 @@ import SyntaxHighlighter from 'react-syntax-highlighter';
 import { docco } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import copy from 'copy-to-clipboard';
 import { Schema } from '../proptypes';
+import useComponentVisible from "./useComponentVisible";
 
 export default function ChatBox() {
+  const { ref, isComponentVisible, setIsComponentVisible } = useComponentVisible(false);
   const [input, setInput] = useState("")
   const [open, setOpen] = useState(false);
   const [show, setShow] = useState(false);
@@ -19,21 +21,26 @@ export default function ChatBox() {
   const [dataSourceId, setDataSourceId] = useState();
   const [answeredParts, setAnsweredParts] = useState([]);
   const [schemas, setSchema] = useState([]);
+  const [runCount, setRunCount] = useState(0);
+  const [selectedSchema, setSelectedSchema] = useState(null);
 
   useEffect(() => {
-    const DataSourceId = JSON.parse(localStorage.getItem("DataSourceId"));
-    const schemas = JSON.parse(localStorage.getItem("schemas"));
-    if (DataSourceId !== null) {
-      setDataSourceId(DataSourceId);
-    } else {}
+    // if (runCount < 3) {
+      const DataSourceId = JSON.parse(localStorage.getItem("DataSourceId"));
+      const schemas = JSON.parse(localStorage.getItem("schemas"));
 
-    if (schemas !== null) {
-      setSchema(schemas["schema"]);
-    } else {}
+      if (DataSourceId !== null) {
+        setDataSourceId(DataSourceId);
+      }
 
-  }, []);
-  console.log("dont", schemas)
-    
+      if (schemas !== null) {
+        setSchema(schemas["schema"]);
+      }
+      setRunCount(runCount + 1);
+    // }
+  }, [dataToModel]);
+
+   
   const handler = (event) => {
     if (event.keyCode === 13) {      
       handleChatInput();
@@ -58,7 +65,7 @@ export default function ChatBox() {
 
       const response = await Chat.openai(requestOptions); 
       const parts = AnswerParts(response.answer);
-      
+     
       const data = {
         sender: "bot",
         parts
@@ -69,8 +76,11 @@ export default function ChatBox() {
       const codePartExists = parts.some((part) => part.type === 'code');
       if (codePartExists) {
         const codeParts = parts.filter((part) => part.type === 'code');
-        const codeContent = codeParts.map((part) => part.content).join('\n');
-        postquery(null, codeContent);
+        // const codeContent = codeParts.map((part) => part.content).join('\n');
+        // postquery(null, codeContent);
+        codeParts.forEach((part) => {
+          postquery(null, part.content);
+        });
       }         
   }
 
@@ -120,6 +130,7 @@ export default function ChatBox() {
   };
   
   const postquery = async(name = null, querySyntax = null) => {
+    setSelectedSchema(name);
     let query_data = {
         "name": `Chat Query`,
         "query": null,
@@ -127,7 +138,7 @@ export default function ChatBox() {
         "data_source_id": dataSourceId,
         "visualizations": {}
     }
-    console.log("postquery", query_data)
+   
     if (querySyntax !== null) {
         query_data.query = querySyntax;
     } else if (name !== null) {
@@ -220,108 +231,126 @@ export default function ChatBox() {
     const response = await Chat.visualize(visualizationConfig)
   };
   
+  
   return (
     <>
-      {open?
-      <div className='main-box'>
+      {isComponentVisible?
+      <div className='main-box' ref={ref}>
         {show?
         <div className='schema-box'>
+          <h1 className='schema_head'>All Schemas</h1>
           {schemas?.map((schema, index) => (
               <div key={index} className="schema">
-                  <button className="schema-btn" onClick={()=>postquery(schema.name)}>{schema.name}</button>              
+                  <button 
+                  className={`schema-btn ${schema.name === selectedSchema ? 'selected' : ''}`}
+                  onClick={()=>postquery(schema.name)}>
+                  {schema.name}
+                  </button>              
               </div>
           ))}
         </div>:null}
+        
+        <div className='container_chat'>
+          <div className='dots' onClick={()=>setShow(!show)}>
+            <div className='three_lines'>
+              <div className='lines'></div>
+              <div className='lines'></div>
+              <div className='lines'></div>
+            </div>
+          </div>
 
-        <div className='three_lines' onClick={()=>setShow(!show)}>
-          <div className='lines'></div>
-          <div className='lines'></div>
-          <div className='lines'></div>
-        </div>
-
-        <div className='chatcontainer'>
-          <div>
-              <div className='chatbox'>
-                <div className='head_full'>
-                  <div className='headbox'>
-                    <p>query, visualize with AI</p>                   
-                  </div>
+          <div className='chatcontainer'>
+              <div className='head_full'>
+                <div className='headbox'>
+                  <p>RedAIstant</p>                   
                 </div>
-
-                {chatHistory?.map((message, index) => (
-                  <div key={index} className={`chatcontain ${message.sender}`}>
-                    {message.sender === "user" ? (
-                      <div className="user">
-                      <div className="">
-                        <p className="parauser">{message.text}</p>
+              </div>
+            <div>
+                <div className='chatbox'>
+                  {chatHistory?.map((message, index) => (
+                    <div key={index} className={`chatcontain ${message.sender}`}>
+                      {message.sender === "user" ? (
+                        <div className="user">
+                          <div className="">
+                            <p className="parauser">{message.text}</p>
+                          </div>
                       </div>
-                    </div>
-                    ):(
-                    <div className='ai'>
-                      {message.sender === "bot" && (
-                        <>
-                          {message.parts.map((part, partIndex) => (
-                            <div key={partIndex}>                          
-                              {part.type === 'code' ? (
-                                <div className="">
-                                  <div className='chat-head'>
-                                      <div className='copy' onClick={() => handleCopy(part.content)}>
-                                        {copiedStates[part.content] ? (
-                                          <FaCheck className='check'/>
-                                        ) : (
-                                          <IoCopy className='copyicon'/>
-                                        )}
+                      ):(
+                      <div className='ai'>
+                        {message.sender === "bot" && (
+                          <>                         
+                            <div className="content-container">
+                              {message.parts.map((part, index) => (
+                                <div key={index} className={part.type === 'code' ? 'code-container' : 'text-container'}>
+                                  {part.type === 'code' ? (
+                                    <>
+                                      <div className="chat-head">
+                                        <div className="copy" onClick={() => handleCopy(part.content)}>
+                                          {copiedStates[part.content] ? (
+                                            <FaCheck className="check" />
+                                          ) : (
+                                            <IoCopy className="copyicon" />
+                                          )}
+                                        </div>
+                                        <div className="">{part.firstWord}</div>
                                       </div>
-                                      <div className=''>
-                                        {part.firstWord}
-                                      </div>                            
-                                  </div>
-                                  <SyntaxHighlighter
-                                    language={part.firstWord}
-                                    style={docco}
-                                    className='x-container'
-                                    customStyle={{
-                                      fontSize: '14px',
-                                      lineHeight: '1.5',
-                                      maxWidth: '200%',
-                                      wordBreak: 'break-word',
-                                      overflowWrap: 'break-word',
-                                      whiteSpace: 'pre-wrap',
-                                      overflow: 'auto'
-                                    }}
-                                  >
-                                    {part.content}
-                                  </SyntaxHighlighter>
+                                      <div className="code-block">
+                                        <SyntaxHighlighter
+                                          language={part.firstWord}
+                                          style={docco}
+                                          className="x-container"
+                                          customStyle={{
+                                            fontSize: '14px',
+                                            lineHeight: '1.5',
+                                            maxWidth: '100%',
+                                            wordBreak: 'break-word',
+                                            overflowWrap: 'break-word',
+                                            whiteSpace: 'pre-wrap',
+                                            overflow: 'auto',
+                                          }}
+                                        >
+                                          {part.content}
+                                        </SyntaxHighlighter>
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="text-container">
+                                      <p>{part.content}</p>
+                                    </div>
+                                  )}
                                 </div>
-                              ):(
-                                <p>{part.content}</p>
-                              )}
+                              ))}
                             </div>
-                          ))}
-                        </>
+                          </>
+                        )}
+                      </div>
                       )}
                     </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <div className='inputbox'>        
-                <input             
-                    className="input"    
-                    type="text"
-                    value={input}
-                    placeholder="Type your message…"
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => handler(e)}
-                />
-              </div>
+                <div className='inputbox'>        
+                  <input             
+                      className="input"    
+                      type="text"
+                      value={input}
+                      placeholder="Type your message…"
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => handler(e)}
+                  />
+                </div>
+            </div>
           </div>
         </div>
+
       </div>
       :null}
 
-      <div className='iconbox' onClick={()=>setOpen(!open)}>
+      <div className='iconbox' 
+      // onClick={()=>setOpen(!open)}
+      ref={ref}
+      onClick={() => setIsComponentVisible(!isComponentVisible)}
+      >
          <img alt="charimage" src={redashpng} className="icon" />
       </div>     
     </>

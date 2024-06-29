@@ -32,15 +32,7 @@ class EditDataSource extends React.Component {
     tableName: null
   };
 
-  componentDidMount() {
-    // const dataToModel = localStorage.getItem("DataSourceId");
-    // if (dataToModel !== null) {
-    //   localStorage.removeItem("DataSourceId");
-    // } 
-    // if(this.props.dataSourceId !== null){
-    //   localStorage.setItem("DataSourceId", this.props.dataSourceId);
-    // }
-    
+  componentDidMount() {   
     DataSource.get({ id: this.props.dataSourceId })
       .then(dataSource => {
         const { type } = dataSource;
@@ -88,15 +80,20 @@ class EditDataSource extends React.Component {
   };
 
   testConnection = callback => {
+    const dataToModel = localStorage.getItem("DataSourceId");
+    const schemas = localStorage.getItem("schemas");
+    if (dataToModel !== null || schemas !== null) {
+      localStorage.removeItem("DataSourceId");
+      localStorage.removeItem("schemas")
+    } 
+
     const { dataSource } = this.state;
     DataSource.test({ id: dataSource.id })
       .then(httpResponse => {
         if (httpResponse.ok) {
           notification.success("Success");
-
-          if(this.props.dataSourceId !== null){
-            this.fetchSchema();
-          }
+          this.fetchSchema();
+       
         } else {
           notification.error("Connection Test Failed:", httpResponse.message, { duration: 10 });
         }
@@ -159,6 +156,7 @@ class EditDataSource extends React.Component {
     const response = await Chat.fetchSchema(this.props.dataSourceId);  
     const responseJSON = JSON.stringify(response);
     const schemas = localStorage.setItem("schemas", responseJSON);
+    const sourceId = localStorage.setItem("DataSourceId", this.props.dataSourceId);
     // const tableName = response['schema'][0]['name']
     // this.setState({ tableName });  
   }
