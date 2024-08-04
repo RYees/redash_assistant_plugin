@@ -26,7 +26,10 @@ Upon receiving a user's request, the assistant will:
 Steps to do run the project:
 * First you need to have a working redash on your machine, you can follow these [link](https://github.com/getredash/redash/wiki/Local-development-setup)
 * Follow the below steps
-        git clone https://github.com/RYees/redash_assistant_plugin.git
+``` 
+   git clone https://github.com/RYees/redash_assistant_plugin.git
+```
+       
         poetry add
         yarn add
         yarn
