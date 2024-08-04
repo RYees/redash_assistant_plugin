@@ -30,6 +30,8 @@ Steps to do run the project:
 ``` 
    git clone https://github.com/RYees/redash_assistant_plugin.git
 ```
+   cd redash_assistant_plugin
+   
 ```      
    poetry add
 ```
