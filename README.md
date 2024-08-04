@@ -1,120 +1,35 @@
-<p align="center">
-  <img title="Redash" src='https://redash.io/assets/images/logo.png' width="200px"/>
-</p>
+# Redash Assistant Addon
+This project aimed to develop an AI-powered assistant chatbot addon for Redash, a renowned data visualization tool. The primary goal was to enable users to interact with the platform seamlessly using natural language. The AI-generated assistant leverages OpenAI models to help users create SQL queries on their desired data sources using conversational inputs. Additionally, the assistant provides users the option to select appropriate visualization chart types, allowing them to generate visualizations directly within the Redash platform. This integration streamlines the data exploration and reporting process, empowering users to gain insights more efficiently.
 
-[![Documentation](https://img.shields.io/badge/docs-redash.io/help-brightgreen.svg)](https://redash.io/help/)
-[![GitHub Build](https://github.com/getredash/redash/actions/workflows/ci.yml/badge.svg)](https://github.com/getredash/redash/actions)
 
-Redash is designed to enable anyone, regardless of the level of technical sophistication, to harness the power of data big and small. SQL users leverage Redash to explore, query, visualize, and share data from any data sources. Their work in turn enables anybody in their organization to use the data. Every day, millions of users at thousands of organizations around the world use Redash to develop insights and make data-driven decisions.
+# Table of content
+* [Overview](#overview)
+* [Usage](#workflow)
+* [Installation](#workflow)
 
-Redash features:
+## Overview
+The AI-powered assistant chatbot addon for Redash is a innovative solution that enhances the user experience of the popular data visualization tool. Leveraging advanced language models from OpenAI, the assistant enables users to interact with Redash using natural language, significantly simplifying the process of creating SQL queries and generating visualizations.
 
-1. **Browser-based**: Everything in your browser, with a shareable URL.
-2. **Ease-of-use**: Become immediately productive with data without the need to master complex software.
-3. **Query editor**: Quickly compose SQL and NoSQL queries with a schema browser and auto-complete.
-4. **Visualization and dashboards**: Create [beautiful visualizations](https://redash.io/help/user-guide/visualizations/visualization-types) with drag and drop, and combine them into a single dashboard.
-5. **Sharing**: Collaborate easily by sharing visualizations and their associated queries, enabling peer review of reports and queries.
-6. **Schedule refreshes**: Automatically update your charts and dashboards at regular intervals you define.
-7. **Alerts**: Define conditions and be alerted instantly when your data changes.
-8. **REST API**: Everything that can be done in the UI is also available through REST API.
-9. **Broad support for data sources**: Extensible data source API with native support for a long list of common databases and platforms.
+[![Watch the video](https://www.canva.com/design/DAGJoKgp9NE/VAls9Z3MaLivchVtWCG6NA/edit)]
 
-<img src="https://raw.githubusercontent.com/getredash/website/8e820cd02c73a8ddf4f946a9d293c54fd3fb08b9/website/_assets/images/redash-anim.gif" width="80%"/>
+## Usage
+To utilize the AI assistant, users can access the chatbot addon directly within the Redash platform. The assistant can understand a wide range of conversational inputs, allowing users to describe the data they want to analyze and the type of visualization they prefer.
 
-## Getting Started
+Upon receiving a user's request, the assistant will:
 
-* [Setting up Redash instance](https://redash.io/help/open-source/setup) (includes links to ready-made AWS/GCE images).
-* [Documentation](https://redash.io/help/).
+* Automatically generate the corresponding SQL query based on the user's natural language input.
+* Provide users the option to select an appropriate visualization chart type for the generated query.
+* Seamlessly integrate the SQL query and visualization within the Redash platform, enabling users to explore their data and generate reports with ease.
+* The AI assistant's intuitive interface and natural language understanding capabilities eliminate the need for users to have extensive SQL or data visualization expertise, making Redash accessible to a broader audience. This integration empowers users to gain insights from their data more efficiently, streamlining the decision-making process.
 
-## Supported Data Sources
-
-Redash supports more than 35 SQL and NoSQL [data sources](https://redash.io/help/data-sources/supported-data-sources). It can also be extended to support more. Below is a list of built-in sources:
-
-- Amazon Athena
-- Amazon CloudWatch / Insights
-- Amazon DynamoDB
-- Amazon Redshift
-- ArangoDB
-- Axibase Time Series Database
-- Apache Cassandra
-- ClickHouse
-- CockroachDB
-- Couchbase
-- CSV
-- Databricks
-- DB2 by IBM
-- Dgraph
-- Apache Drill
-- Apache Druid
-- e6data
-- Eccenca Corporate Memory
-- Elasticsearch
-- Exasol
-- Microsoft Excel
-- Firebolt
-- Databend
-- Google Analytics
-- Google BigQuery
-- Google Spreadsheets
-- Graphite
-- Greenplum
-- Apache Hive
-- Apache Impala
-- InfluxDB
-- InfluxDBv2
-- IBM Netezza Performance Server
-- JIRA (JQL)
-- JSON
-- Apache Kylin
-- OmniSciDB (Formerly MapD)
-- MariaDB
-- MemSQL
-- Microsoft Azure Data Warehouse / Synapse
-- Microsoft Azure SQL Database
-- Microsoft Azure Data Explorer / Kusto
-- Microsoft SQL Server
-- MongoDB
-- MySQL
-- Oracle
-- Apache Phoenix
-- Apache Pinot
-- PostgreSQL
-- Presto
-- Prometheus
-- Python
-- Qubole
-- Rockset
-- RisingWave
-- Salesforce
-- ScyllaDB
-- Shell Scripts
-- Snowflake
-- SPARQL
-- SQLite
-- TiDB
-- Tinybird
-- TreasureData
-- Trino
-- Uptycs
-- Vertica
-- Yandex AppMetrrica
-- Yandex Metrica
-
-## Getting Help
-
-* Issues: https://github.com/getredash/redash/issues
-* Discussion Forum: https://github.com/getredash/redash/discussions/
-* Development Discussion: https://discord.gg/tN5MdmfGBp
-
-## Reporting Bugs and Contributing Code
-
-* Want to report a bug or request a feature? Please open [an issue](https://github.com/getredash/redash/issues/new).
-* Want to help us build **_Redash_**? Fork the project, edit in a [dev environment](https://github.com/getredash/redash/wiki/Local-development-setup) and make a pull request. We need all the help we can get!
-
-## Security
-
-Please email security@redash.io to report any security vulnerabilities. We will acknowledge receipt of your vulnerability and strive to send you regular updates about our progress. If you're curious about the status of your disclosure please feel free to email us again. If you want to encrypt your disclosure email, you can use [this PGP key](https://keybase.io/arikfr/key.asc).
-
-## License
-
-BSD-2-Clause.
+## Installation
+Steps to do run the project:
+* First you need to have a working redash on your machine, you can follow these [link](https://github.com/getredash/redash/wiki/Local-development-setup)
+* Follow the below steps
+    git clone https://github.com/RYees/redash_assistant_plugin.git
+    poetry add
+    yarn add
+    yarn
+    make build
+    make compose-build
+    make up
