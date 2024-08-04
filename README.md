@@ -10,7 +10,8 @@ This project aimed to develop an AI-powered assistant chatbot addon for Redash, 
 ## Overview
 The AI-powered assistant chatbot addon for Redash is a innovative solution that enhances the user experience of the popular data visualization tool. Leveraging advanced language models from OpenAI, the assistant enables users to interact with Redash using natural language, significantly simplifying the process of creating SQL queries and generating visualizations.
 
-[![Watch the video](https://www.canva.com/design/DAGJoKgp9NE/VAls9Z3MaLivchVtWCG6NA/edit)]
+![Watch the video]
+(https://www.canva.com/design/DAGJoKgp9NE/VAls9Z3MaLivchVtWCG6NA/edit)
 
 ## Usage
 To utilize the AI assistant, users can access the chatbot addon directly within the Redash platform. The assistant can understand a wide range of conversational inputs, allowing users to describe the data they want to analyze and the type of visualization they prefer.
@@ -29,10 +30,21 @@ Steps to do run the project:
 ``` 
    git clone https://github.com/RYees/redash_assistant_plugin.git
 ```
-       
-        poetry add
-        yarn add
-        yarn
-        make build
-        make compose-build
-        make up
+```      
+   poetry add
+```
+```
+   yarn add
+```
+```
+   yarn
+```
+```
+   make build
+```
+```
+   make compose-build
+```
+```
+   make up
+```
